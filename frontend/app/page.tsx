@@ -1,5 +1,5 @@
-import Page from '../components/Page'
-import RecommendationCard from '../components/Recommendation/RecommendationCard'
+import Page from '@/components/Page'
+import RecommendationCard from '@/components/Recommendation/RecommendationCard'
 
 
 export default function HomePage(){
