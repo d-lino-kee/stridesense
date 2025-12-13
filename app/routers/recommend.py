@@ -44,5 +44,23 @@ async def recommend(payload: RecommendationInput, user_id: str | None = Depends(
 
     # Predict soreness for this context (simulate latest-run-like record)
     recent_like = [{
-        "distance_km": top[]
+        "distance_km": top["distance_km"],
+        "avg_speed": 60.0 / user_stats["avg_pace_min_per_km"]
+        "avg_elevation": top["elevation_gain"],
+        "rushed": payload.rushed,
+        "run_type": payload.feeling,
+        "day_of_week": payload.day_of_week,
+        "soreness_level": 3,
     }]
+    soreness = artifacts.predict_soreness(recent_like)
+
+    rationale = (
+        f"Selected '{top['name']}' for a {payload.feeling} given your average pace."
+        f"{user_stats['avg_pace_min_per_km']:.1f} min/km, distance alignment and elevation {int(top['elevation_gain'])} m."
+    )
+
+    return {
+        "route": {**top, "type": payload.feeling},
+        "predicted_soreness": soreness,
+        "rationale": rationale,
+    }

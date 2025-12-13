@@ -1,0 +1,12 @@
+/* minimal utility styles (or wire Tailwind) */
+body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial }
+.border { border: 1px solid #e5e7eb }
+.rounded-xl { border-radius: 12px }
+.rounded-2xl { border-radius: 16px }
+.bg-white { background: #fff }
+.bg-gray-50 { background: #f9fafb }
+.text-gray-600 { color: #4b5563 }
+.text-gray-700 { color: #374151 }
+.shadow-sm { box-shadow: 0 1px 2px rgba(0,0,0,0.05) }
+.container { max-width: 1152px; margin: 0 auto; padding: 24px }
+.btn { background:#111827; color:#fff; padding:8px 12px; border-radius:12px; display:inline-block }
