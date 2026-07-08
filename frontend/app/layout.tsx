@@ -1,27 +1,28 @@
 import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
 import './globals.css'
-import Providers from './providers'
+import Providers from '@/providers'
 import NavBar from './components/NavBar'
+import Footer from './components/Footer'
 
-export const metadata: Metadata = { title: 'StrideSense', description: 'Multi-framework frontend' }
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
+
+export const metadata: Metadata = {
+  title: 'StrideSense — Personalized running recommendations',
+  description:
+    'A multi-framework running recommendation platform. Strava + Google Maps data feed a scikit-learn model that predicts route suitability and recommends personalized runs.',
+}
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-    return (
-        <html lang="en">
-            <body>
-                <Providers>
-                    <NavBar />
-                    {children}
-                    <footer style={{borderTop:'1px solid #e5e7eb', marginTop: 24}}>
-                        <div style={{maxWidth: 1152, margin: '0 auto', padding: '16px', fontSize: 12, color:'#6b7280', display:'flex', justifyContent:'space-between'}}>
-                            <div>© {new Date().getFullYear()} StrideSense</div>
-                            <div style={{display:'flex', gap:12}}>
-                                <a href="#">Privacy</a><a href="#">Terms</a><a href="#">Docs</a>
-                            </div>
-                        </div>
-                    </footer>
-                </Providers>
-            </body>
-        </html>
-    )
+  return (
+    <html lang="en" className={inter.variable}>
+      <body className="flex min-h-screen flex-col font-sans">
+        <Providers>
+          <NavBar />
+          <main className="flex-1">{children}</main>
+          <Footer />
+        </Providers>
+      </body>
+    </html>
+  )
 }

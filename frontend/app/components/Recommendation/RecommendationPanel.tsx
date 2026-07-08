@@ -2,43 +2,59 @@
 
 import { useState } from 'react'
 import RecommendationForm from './RecommendationForm'
-import RecommendationResult from './RecommendationResult'
+import RecommendationCard from './RecommendationCard'
 import { apiFetch } from '@/api-client'
-import { RecommendationInput, RecommendationResult as Result } from '@/types'
-
+import type { RecommendationInput, RecommendationResult } from '@/types'
 
 export default function RecommendationPanel() {
-    const [result, setResult] = useState<Result | null>(null)
-    const [loading, setLoading] = useState(false)
-    const [error, setError] = useState<string | null>(null)
+  const [result, setResult] = useState<RecommendationResult | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-    async function handlesubmit(input: RecommendationInput){
-        setLoading(true)
-        setError(null)
-
-        try {
-            const res = await apiFetch<Result>('/recommendation', {
-                method: 'POST',
-                body: JSON.stringify(input),
-            })
-            if ('__mock' in res) throw new Error('Mock response')
-            setResult(res)
-        } catch (e: any) {
-            setError(e.message ?? 'Failed to fetch recommendation')
-        } finally {
-            setLoading(false)
-        }
+  async function handleSubmit(input: RecommendationInput) {
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await apiFetch<RecommendationResult>('/recommend', {
+        method: 'POST',
+        body: JSON.stringify(input),
+      })
+      setResult(res)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to fetch recommendation')
+    } finally {
+      setLoading(false)
     }
+  }
 
-    return (
-        <section className="border rounded-2xl bg-white p-6 shadow-sm">
-        <h2 style={{ marginTop: 0 }}>Recommended Run</h2>
+  return (
+    <section className="card p-6">
+      <div className="mb-5 flex items-center gap-3">
+        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-gradient text-white">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="h-5 w-5">
+            <path
+              d="M13 2L4.5 12.5H11l-1 9.5 9.5-13H13l0-7z"
+              strokeWidth="1.6"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </span>
+        <div>
+          <h2 className="text-lg font-bold text-ink">Recommended run</h2>
+          <p className="text-xs text-ink-muted">Tuned to how you feel and your recent activity</p>
+        </div>
+      </div>
 
-        <RecommendationForm onSubmit={handleSubmit} loading={loading} />
+      <RecommendationForm onSubmit={handleSubmit} loading={loading} />
 
-        {error && <p style={{ color: 'crimson' }}>{error}</p>}
-
-        {result && <RecommendationResult result={result} />}
-        </section>
-    )
+      {error && (
+        <p className="mt-4 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
+      )}
+      {result && (
+        <div className="mt-5">
+          <RecommendationCard result={result} />
+        </div>
+      )}
+    </section>
+  )
 }

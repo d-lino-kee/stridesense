@@ -1,54 +1,81 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from fastapi.middlewars.cors import CORSMIddleware
+from fastapi.middleware.cors import CORSMiddleware
 from .config import settings
-from .database import engine, Base
+from .database import engine, Base, session_scope
+from .models import Run, Route
 from .routers import runs as runs_router
 from .routers import routes as routes_router
 from .routers import recommend as recommend_router
 from .routers import oauth as oauth_router
 from .routers import chat as chat_router
-from .ml.trainer import train_soreness_model
-from .database import session_scope
-from .models import Run
+from .ml.trainer import train_soreness_model, train_suitability_model
 
-app = FastAPI(title=settings.APP_NAME)
+
+def _run_rows(db) -> list[dict]:
+    return [
+        {
+            "distance_km": r.distance_km,
+            "avg_speed": r.avg_speed,
+            "avg_elevation": r.avg_elevation,
+            "rushed": r.rushed,
+            "run_type": r.run_type,
+            "day_of_week": r.day_of_week,
+            "soreness_level": r.soreness_level,
+        }
+        for r in db.query(Run).all()
+    ]
+
+
+def _route_rows(db) -> list[dict]:
+    return [
+        {"distance_km": r.distance_km, "elevation_gain": r.elevation_gain}
+        for r in db.query(Route).all()
+    ]
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    """Create tables, seed demo data on first boot, and train the ML models."""
+    Base.metadata.create_all(engine)
+
+    with session_scope() as db:
+        has_data = db.query(Route).count() > 0
+    if not has_data:
+        try:
+            from .seed import seed
+
+            seed()
+        except Exception:
+            # Seeding is best-effort — the app still runs (with fallbacks) without it.
+            pass
+
+    with session_scope() as db:
+        run_rows = _run_rows(db)
+        route_rows = _route_rows(db)
+    train_soreness_model(run_rows)
+    train_suitability_model(run_rows, route_rows)
+    yield
+
+
+app = FastAPI(title=settings.APP_NAME, lifespan=lifespan)
 
 app.add_middleware(
-    CORSMIddleware,
-    allow_origins = [settings.FRONTEND_ORIGIN, "*"],
-    allow_credentials = True,
-    allow_methods = ["*"],
+    CORSMiddleware,
+    allow_origins=[settings.FRONTEND_ORIGIN],
+    allow_credentials=True,
+    allow_methods=["*"],
     allow_headers=["*"],
-    )
+)
 
-# Create tables at startup
-Base.metadata.create_all(engine)
-
-@app.on_event("startup")
-async def _startup():
-    # Train the soreness model on available data
-    with session_scope() as db:
-        rows = db.query(Run).all()
-        run_rows = [
-            {
-                "distance_km": r.distance_km,
-                "avg_speed": r.avg_speed,
-                "avg_elevation": r.avg_elevation,
-                "rushed": r.rushed,
-                "run_type": r.run_type,
-                "day_of_week": r.day_of_week,
-                "soreness_level": r.soreness_level,
-            }
-            for r in rows
-        ]
-    train_soreness_model(run_rows)
 
 @app.get("/")
 async def root():
     return {"ok": True, "app": settings.APP_NAME}
 
+
 app.include_router(runs_router.router)
 app.include_router(routes_router.router)
 app.include_router(recommend_router.router)
-app.incldue_router(oauth_router.router)
-app.include_rourter(chat_router.router)
+app.include_router(oauth_router.router)
+app.include_router(chat_router.router)

@@ -1,10 +1,19 @@
-export default function Page({ title, subtitle, children }:{ title: string; subtitle?:string; children:React.ReactNode }){
-    return (
-        <div className="container">
-            <div style={{marginBottom:24}}>
-                <h1 style={{margin:0}}>{title}</h1>
-                {subtitle && <p className="text-gray-600" style={{marginTop:6}}>{subtitle}</p>}
-            </div>
-        </div>
-    )
+export default function Page({
+  title,
+  subtitle,
+  children,
+}: {
+  title: string
+  subtitle?: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="container-page py-8 sm:py-10">
+      <div className="mb-8 animate-fade-up">
+        <h1 className="text-2xl font-bold tracking-tight text-ink sm:text-3xl">{title}</h1>
+        {subtitle && <p className="mt-2 max-w-2xl text-ink-muted">{subtitle}</p>}
+      </div>
+      {children}
+    </div>
+  )
 }
