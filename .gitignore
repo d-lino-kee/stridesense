@@ -17,6 +17,12 @@ __pycache__/
 .venv/
 venv/
 
+# Trained ML artifacts & local databases
+models/
+*.pkl
+*.db
+*.sqlite3
+
 # OS
 .DS_Store
 Thumbs.db
