@@ -48,7 +48,7 @@ export default function ChatPanel() {
   return (
     <section className="card flex flex-col p-6">
       <div className="mb-4 flex items-center gap-3">
-        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-ink text-white">
+        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-gradient text-white shadow-glow">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="h-5 w-5">
             <path
               d="M21 15a2 2 0 01-2 2H8l-4 4V5a2 2 0 012-2h13a2 2 0 012 2z"
@@ -58,7 +58,12 @@ export default function ChatPanel() {
           </svg>
         </span>
         <div>
-          <h2 className="text-lg font-bold text-ink">Coach chat</h2>
+          <h2 className="flex items-center gap-2 text-lg font-bold text-ink">
+            Coach chat
+            <span className="chip bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> online
+            </span>
+          </h2>
           <p className="text-xs text-ink-muted">Grounded in your run history</p>
         </div>
       </div>

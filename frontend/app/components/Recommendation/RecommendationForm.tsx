@@ -3,17 +3,17 @@
 import { useState } from 'react'
 import type { RecommendationInput, RunType, ElevationPref } from '@/types'
 
-const RUN_TYPES: { value: RunType; label: string }[] = [
-  { value: 'jog', label: 'Jog' },
-  { value: 'light', label: 'Light' },
-  { value: 'mid', label: 'Mid' },
-  { value: 'marathon', label: 'Marathon' },
+const RUN_TYPES: { value: RunType; label: string; emoji: string; hint: string }[] = [
+  { value: 'jog', label: 'Jog', emoji: '🚶', hint: 'Easy' },
+  { value: 'light', label: 'Light', emoji: '🏃', hint: '30 min' },
+  { value: 'mid', label: 'Mid', emoji: '🏃‍♂️', hint: '10 km' },
+  { value: 'marathon', label: 'Long', emoji: '🏅', hint: 'Big day' },
 ]
 
-const ELEV_PREFS: { value: ElevationPref; label: string }[] = [
-  { value: 'flat', label: 'Flat' },
-  { value: 'up', label: 'Uphill' },
-  { value: 'down', label: 'Downhill' },
+const ELEV_PREFS: { value: ElevationPref; label: string; icon: string }[] = [
+  { value: 'flat', label: 'Flat', icon: 'M4 12h16' },
+  { value: 'up', label: 'Uphill', icon: 'M4 18L20 6' },
+  { value: 'down', label: 'Downhill', icon: 'M4 6l16 12' },
 ]
 
 export default function RecommendationForm({
@@ -45,7 +45,7 @@ export default function RecommendationForm({
     >
       <div>
         <span className="field-label">How do you feel today?</span>
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-4 gap-2.5">
           {RUN_TYPES.map((rt) => {
             const active = form.feeling === rt.value
             return (
@@ -53,13 +53,19 @@ export default function RecommendationForm({
                 type="button"
                 key={rt.value}
                 onClick={() => update('feeling', rt.value)}
-                className={`rounded-xl border px-2 py-2.5 text-sm font-semibold transition ${
+                className={`group flex flex-col items-center gap-1 rounded-2xl border px-2 py-3 transition-all duration-200 ${
                   active
-                    ? 'border-brand-400 bg-brand-50 text-brand-700 shadow-sm'
-                    : 'border-slate-200 bg-white text-ink-soft hover:border-slate-300'
+                    ? 'border-transparent bg-brand-gradient text-white shadow-glow'
+                    : 'border-slate-200 bg-white text-ink-soft hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-card'
                 }`}
               >
-                {rt.label}
+                <span className={`text-xl transition-transform group-hover:scale-110 ${active ? 'drop-shadow' : ''}`}>
+                  {rt.emoji}
+                </span>
+                <span className="text-sm font-bold leading-none">{rt.label}</span>
+                <span className={`text-[10px] leading-none ${active ? 'text-white/80' : 'text-ink-muted'}`}>
+                  {rt.hint}
+                </span>
               </button>
             )
           })}
@@ -68,7 +74,7 @@ export default function RecommendationForm({
 
       <div>
         <span className="field-label">Elevation preference</span>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-3 gap-2.5">
           {ELEV_PREFS.map((ep) => {
             const active = form.pref_elevation === ep.value
             return (
@@ -76,12 +82,15 @@ export default function RecommendationForm({
                 type="button"
                 key={ep.value}
                 onClick={() => update('pref_elevation', ep.value)}
-                className={`rounded-xl border px-2 py-2.5 text-sm font-medium transition ${
+                className={`flex items-center justify-center gap-2 rounded-2xl border px-2 py-2.5 text-sm font-semibold transition-all duration-200 ${
                   active
-                    ? 'border-brand-400 bg-brand-50 text-brand-700 shadow-sm'
-                    : 'border-slate-200 bg-white text-ink-soft hover:border-slate-300'
+                    ? 'border-transparent bg-brand-gradient text-white shadow-glow'
+                    : 'border-slate-200 bg-white text-ink-soft hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-card'
                 }`}
               >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="h-4 w-4">
+                  <path d={ep.icon} strokeWidth="2.2" strokeLinecap="round" />
+                </svg>
                 {ep.label}
               </button>
             )
@@ -129,14 +138,25 @@ export default function RecommendationForm({
         <span className="text-sm font-medium text-ink-soft">I’m in a rush today</span>
       </label>
 
-      <button type="submit" disabled={loading} className="btn-primary py-3">
+      <button
+        type="submit"
+        disabled={loading}
+        className="group relative overflow-hidden py-3.5 text-base btn-primary"
+      >
+        {/* sheen sweep */}
+        <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
         {loading ? (
           <>
             <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
-            Analyzing…
+            Analyzing your run…
           </>
         ) : (
-          'Get my recommendation'
+          <>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="h-5 w-5">
+              <path d="M13 2L4.5 12.5H11l-1 9.5 9.5-13H13l0-7z" strokeWidth="1.6" strokeLinejoin="round" />
+            </svg>
+            Get my recommendation
+          </>
         )}
       </button>
     </form>
