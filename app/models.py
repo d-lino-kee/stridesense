@@ -46,3 +46,16 @@ class Route(Base):
     map_data: Mapped[dict | None] = mapped_column(JSON, default=None, nullable=True)
 
     user: Mapped["User"] = relationship(back_populates="routes")
+
+
+class Review(Base):
+    """A runner's review of a route (identified by its stable slug)."""
+
+    __tablename__ = "reviews"
+    review_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    route_slug: Mapped[str] = mapped_column(String, index=True)
+    user_id: Mapped[str | None] = mapped_column(String, nullable=True)
+    author: Mapped[str] = mapped_column(String, default="Anonymous")
+    rating: Mapped[int] = mapped_column(Integer)  # 1–5 stars
+    comment: Mapped[str] = mapped_column(String, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

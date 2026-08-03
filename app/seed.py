@@ -32,11 +32,14 @@ def seed() -> None:
                 rushed=(i % 7 == 0),
             ))
 
+        # Waterloo-region routes (mirrors frontend/app/data/waterlooRoutes.ts).
         for name, km, gain in [
-            ("Lake Loop", 8.2, 120),
-            ("Valley Glide", 7.3, 40),
-            ("Summit Sprint", 10.5, 240),
-            ("Riverside Out & Back", 6.8, 60),
+            ("Ring Road Loop", 3.4, 22),
+            ("Waterloo Park Loop", 4.6, 48),
+            ("Laurel Creek Trail", 6.8, 96),
+            ("Iron Horse Trail", 7.2, 34),
+            ("Columbia Lake Loop", 3.9, 28),
+            ("Grand River · RIM Park", 12.4, 168),
         ]:
             db.add(Route(user_id=user_id, name=name, distance_km=km, elevation_gain=gain))
 

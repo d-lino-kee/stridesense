@@ -25,5 +25,11 @@ class Settings(BaseSettings):
     # LLM (optional)
     OPENAI_API_KEY: str | None = None
 
+    # Distributed systems layer (all optional — graceful in-process fallback).
+    # Point REDIS_URL at a Redis instance to make the cache, task queue and locks
+    # shared across horizontally-scaled API replicas.
+    REDIS_URL: str | None = None
+    SUMMARY_WORKERS: int = 2  # async workers draining the route-summary queue
+
 
 settings = Settings()

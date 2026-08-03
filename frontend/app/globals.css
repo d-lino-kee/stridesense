@@ -43,4 +43,37 @@
   .chip {
     @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium;
   }
+
+  .card-glass {
+    @apply rounded-2xl border border-white/60 bg-white/70 shadow-card backdrop-blur-xl;
+  }
+
+  .gradient-text {
+    @apply bg-brand-gradient bg-clip-text text-transparent;
+  }
+
+  .stat-pill {
+    @apply flex items-center gap-3 rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-3
+           shadow-inner-glow backdrop-blur transition hover:-translate-y-0.5 hover:shadow-card;
+  }
+
+  .skeleton {
+    @apply animate-shimmer rounded-xl bg-[length:1000px_100%] bg-gradient-to-r
+           from-slate-100 via-slate-200/70 to-slate-100;
+  }
+}
+
+@layer utilities {
+  .scrollbar-slim {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.5) transparent;
+  }
+  .scrollbar-slim::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-slim::-webkit-scrollbar-thumb {
+    background-color: rgba(148, 163, 184, 0.5);
+    border-radius: 9999px;
+  }
 }

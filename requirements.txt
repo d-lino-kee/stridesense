@@ -9,3 +9,7 @@ firebase-admin>=6.4
 scikit-learn>=1.4
 numpy>=1.26
 joblib>=1.3
+
+# Optional: enables the shared (multi-replica) cache/queue/locks in the
+# distributed-systems layer. Omit to run with the in-process fallback.
+redis>=5.0

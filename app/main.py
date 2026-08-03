@@ -9,7 +9,11 @@ from .routers import routes as routes_router
 from .routers import recommend as recommend_router
 from .routers import oauth as oauth_router
 from .routers import chat as chat_router
+from .routers import route_intel as route_intel_router
 from .ml.trainer import train_soreness_model, train_suitability_model
+from .config import settings as _settings
+from .distributed import task_queue, cache
+from .distributed.node import NODE
 
 
 def _run_rows(db) -> list[dict]:
@@ -55,6 +59,13 @@ async def lifespan(_: FastAPI):
         route_rows = _route_rows(db)
     train_soreness_model(run_rows)
     train_suitability_model(run_rows, route_rows)
+
+    # Start the distributed task-queue worker pool (drains route-summary jobs).
+    task_queue.start(workers=_settings.SUMMARY_WORKERS)
+    print(
+        f"[distributed] node={NODE.id} cache={cache.backend} "
+        f"queue={task_queue.backend} workers={_settings.SUMMARY_WORKERS}"
+    )
     yield
 
 
@@ -79,3 +90,4 @@ app.include_router(routes_router.router)
 app.include_router(recommend_router.router)
 app.include_router(oauth_router.router)
 app.include_router(chat_router.router)
+app.include_router(route_intel_router.router)

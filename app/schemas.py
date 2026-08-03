@@ -49,3 +49,29 @@ class RecommendationResult(BaseModel):
 
 class ChatMessage(BaseModel):
     message: str
+
+
+class SummaryRequest(BaseModel):
+    slug: str
+    name: str
+    distance_km: float
+    surface: str | None = None
+    tag: str | None = None
+    elevation: list[float] = Field(default_factory=list)
+
+
+class ReviewIn(BaseModel):
+    route_slug: str
+    rating: int = Field(ge=1, le=5)
+    comment: str = ""
+    author: str | None = None
+    idempotency_key: str | None = None
+
+
+class ReviewOut(BaseModel):
+    review_id: int
+    route_slug: str
+    author: str
+    rating: int
+    comment: str
+    created_at: datetime

@@ -3,7 +3,8 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useDispatch } from 'react-redux'
-import Page from '@/components/Page'
+import DashboardHero from '@/components/Dashboard/DashboardHero'
+import RouteMapPanel from '@/components/Map/RouteMapPanel'
 import RecommendationPanel from '@/components/Recommendation/RecommendationPanel'
 import ChartsPanel from '@/components/Charts/ChartsPanel'
 import RoutesPanel from '@/components/Routes/RoutesPanel'
@@ -51,10 +52,13 @@ export default function Dashboard() {
   const firstName = (user.displayName ?? user.email ?? 'Runner').split(/[\s@]/)[0]
 
   return (
-    <Page
-      title={`Welcome back, ${firstName}`}
-      subtitle="Personalized recommendations from your activity history."
-    >
+    <div className="container-page py-8 sm:py-10">
+      <DashboardHero firstName={firstName} />
+
+      <div className="mb-6">
+        <RouteMapPanel />
+      </div>
+
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="grid content-start gap-6 lg:col-span-2">
           <RecommendationPanel />
@@ -67,6 +71,6 @@ export default function Dashboard() {
           <ChatPanel />
         </div>
       </div>
-    </Page>
+    </div>
   )
 }
