@@ -13,6 +13,11 @@
       radial-gradient(50rem 40rem at -10% 10%, rgba(37, 99, 235, 0.05), transparent 55%);
     background-attachment: fixed;
   }
+  /* Headings use the display face for a warmer, more editorial feel. */
+  h1, h2, h3 {
+    @apply font-display;
+    letter-spacing: -0.015em;
+  }
 }
 
 @layer components {

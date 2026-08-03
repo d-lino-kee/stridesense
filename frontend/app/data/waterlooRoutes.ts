@@ -207,8 +207,7 @@ export function routeById(id: number): WaterlooRoute | undefined {
  * Build a keyless Google Maps *directions* embed that traces the actual walking
  * path through every waypoint — this is the on-map route "tracer".
  */
-export function tracerEmbedUrl(route: WaterlooRoute): string {
-  const pts = route.waypoints
+export function tracerEmbedFromWaypoints(pts: LatLng[]): string {
   const saddr = `${pts[0].lat},${pts[0].lng}`
   const rest = pts.slice(1)
   const daddr = rest
@@ -216,6 +215,10 @@ export function tracerEmbedUrl(route: WaterlooRoute): string {
     .join('')
   // dirflg=w → walking directions; output=embed → keyless interactive map.
   return `https://maps.google.com/maps?saddr=${saddr}&daddr=${daddr}&dirflg=w&output=embed`
+}
+
+export function tracerEmbedUrl(route: WaterlooRoute): string {
+  return tracerEmbedFromWaypoints(route.waypoints)
 }
 
 /** Single-pin embed centred on the route start. */

@@ -51,6 +51,21 @@ class ChatMessage(BaseModel):
     message: str
 
 
+class DiscoverInput(BaseModel):
+    start_lat: float
+    start_lng: float
+    end_lat: float | None = None
+    end_lng: float | None = None
+    area: str | None = None  # city / place label for naming
+    feeling: str = "mid"
+    pref_elevation: str | None = None
+    adventure_level: float = Field(default=0.4, ge=0.0, le=1.0)
+    rushed: bool = False
+    day_of_week: int = 0
+    target_distance_km: float | None = None
+    time_available_min: int | None = None
+
+
 class SummaryRequest(BaseModel):
     slug: str
     name: str

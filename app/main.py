@@ -10,6 +10,8 @@ from .routers import recommend as recommend_router
 from .routers import oauth as oauth_router
 from .routers import chat as chat_router
 from .routers import route_intel as route_intel_router
+from .routers import geo as geo_router
+from .routers import discover as discover_router
 from .ml.trainer import train_soreness_model, train_suitability_model
 from .config import settings as _settings
 from .distributed import task_queue, cache
@@ -91,3 +93,5 @@ app.include_router(recommend_router.router)
 app.include_router(oauth_router.router)
 app.include_router(chat_router.router)
 app.include_router(route_intel_router.router)
+app.include_router(geo_router.router)
+app.include_router(discover_router.router)

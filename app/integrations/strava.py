@@ -1,7 +1,7 @@
 import urllib.parse
-import requests
 from fastapi import HTTPException
 from ..config import settings
+from .. import http_util
 
 
 STRAVA_AUTH_URL = "https://www.strava.com/oauth/authorize"
@@ -26,7 +26,7 @@ def oauth_start_url(state: str) -> str:
 def exchange_token(code: str) -> dict:
     if not (settings.STRAVA_CLIENT_ID and settings.STRAVA_CLIENT_SECRET):
         raise HTTPException(status_code=500, detail="Missing Strava credentials")
-    r = requests.post(
+    r = http_util.post(
         STRAVA_TOKEN_URL,
         data={
             "client_id": settings.STRAVA_CLIENT_ID,
@@ -43,7 +43,7 @@ def exchange_token(code: str) -> dict:
 
 def get_activities(access_token: str, per_page: int = 50) -> list[dict]:
     headers = {"Authorization": f"Bearer {access_token}"}
-    r = requests.get(
+    r = http_util.get(
         f"{STRAVA_API_BASE}/athlete/activities",
         params={"per_page": per_page},
         headers=headers,

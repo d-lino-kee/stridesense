@@ -6,6 +6,7 @@ import { signOut } from 'firebase/auth'
 import { auth } from '@/firebase/client'
 import { useAuth } from '@/providers/AuthProvider'
 import { apiFetch } from '@/api-client'
+import Avatar from '@/components/Avatar'
 import type { RunRecord } from '@/types'
 
 function StatCard({
@@ -141,18 +142,9 @@ export default function ProfilePage() {
           <div className="px-6 pb-6 sm:px-8">
             <div className="-mt-12 flex items-end justify-between">
               <div className="flex items-end gap-4">
-                {user.photoURL ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={user.photoURL}
-                    alt=""
-                    className="h-24 w-24 rounded-3xl border-4 border-white object-cover shadow-lift"
-                  />
-                ) : (
-                  <span className="flex h-24 w-24 items-center justify-center rounded-3xl border-4 border-white bg-brand-gradient text-4xl font-black text-white shadow-lift">
-                    {initial}
-                  </span>
-                )}
+                <span className="rounded-[34%] bg-white p-1 shadow-lift">
+                  <Avatar src={user.photoURL} initial={initial} size={92} status />
+                </span>
               </div>
               <span className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-100">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
@@ -273,10 +265,14 @@ export default function ProfilePage() {
               await signOut(auth)
               router.replace('/login')
             }}
-            className="group inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-ink-soft shadow-sm transition-all hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+            className="group relative inline-flex items-center gap-2 overflow-hidden rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-ink-soft shadow-sm transition-all hover:border-red-200 hover:text-red-600"
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="h-4 w-4 transition-transform group-hover:translate-x-0.5"><path d="M15 17l5-5-5-5M20 12H9M9 4H6a2 2 0 00-2 2v12a2 2 0 002 2h3" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
-            Sign out
+            <span className="pointer-events-none absolute inset-0 -translate-x-full bg-red-50 transition-transform duration-300 group-hover:translate-x-0" />
+            <span className="relative flex h-5 w-5 items-center justify-center overflow-hidden">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="h-4 w-4 transition-all duration-300 group-hover:translate-x-6 group-hover:opacity-0"><path d="M15 17l5-5-5-5M20 12H9M9 4H6a2 2 0 00-2 2v12a2 2 0 002 2h3" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="absolute h-4 w-4 -translate-x-6 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100"><path d="M15 17l5-5-5-5M20 12H9M9 4H6a2 2 0 00-2 2v12a2 2 0 002 2h3" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            </span>
+            <span className="relative">Sign out</span>
           </button>
         </div>
       </div>

@@ -1,11 +1,23 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Plus_Jakarta_Sans, Bricolage_Grotesque } from 'next/font/google'
 import './globals.css'
 import Providers from '@/providers'
 import NavBar from './components/NavBar'
 import Footer from './components/Footer'
+import ApiStatusBanner from './components/ApiStatusBanner'
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
+// Warmer, more humanist type: Plus Jakarta Sans for body, Bricolage Grotesque
+// (a slightly organic grotesque) for headings.
+const sans = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  variable: '--font-sans',
+  display: 'swap',
+})
+const display = Bricolage_Grotesque({
+  subsets: ['latin'],
+  variable: '--font-display',
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
   title: 'StrideSense — Personalized running recommendations',
@@ -15,12 +27,13 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en" className={`${sans.variable} ${display.variable}`}>
       <body className="flex min-h-screen flex-col font-sans">
         <Providers>
           <NavBar />
           <main className="flex-1">{children}</main>
           <Footer />
+          <ApiStatusBanner />
         </Providers>
       </body>
     </html>

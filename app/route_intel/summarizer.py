@@ -30,51 +30,51 @@ def _heuristic(payload: dict) -> str:
 
     # Terrain character.
     if relief <= 15:
-        terrain = "flat and forgiving — the ground barely tilts under you"
-        legs = "Your legs stay fresh; this is a route you can float over."
+        terrain = "flat and forgiving, with ground that barely tilts under you"
+        legs = "Your legs stay fresh the whole way, so it feels like you can float over it."
     elif relief <= 45:
         terrain = "gently rolling, with a few soft rises that break up the rhythm"
-        legs = "Expect a mild burn on the ups and easy, free-wheeling downs."
+        legs = "Expect a mild burn on the way up and easy, freewheeling downs."
     elif relief <= 90:
-        terrain = "genuinely undulating — real climbs answered by rewarding descents"
-        legs = "Your quads will feel the climbs and your calves the pace changes."
+        terrain = "genuinely undulating, with real climbs that get answered by rewarding descents"
+        legs = "Your quads will feel the climbs and your calves will feel the pace changes."
     else:
-        terrain = "hilly and demanding, with a proper valley to drop into and climb out of"
-        legs = "Save something in the tank: the climb-out will ask for it near the end."
+        terrain = "hilly and honest, with a proper valley to drop into and climb back out of"
+        legs = "Save a little in the tank, because that last climb will ask for it."
 
     # Effort framing.
     if dist <= 4:
         effort = "a short, punchy outing"
     elif dist <= 8:
-        effort = "a solid mid-length run"
+        effort = "a solid run of medium length"
     elif dist <= 13:
         effort = "a longer, steady effort"
     else:
         effort = "a big endurance day"
 
     surface_note = {
-        "paved path": "Smooth pavement means predictable footing and fast, even splits.",
-        "gravel trail": "Crushed gravel softens each landing but nudges your effort up a notch.",
-        "rail trail": "The old rail grade is dead-straight and near-level — perfect for locking into a rhythm.",
+        "paved path": "Smooth pavement gives you predictable footing and fast, even splits.",
+        "gravel trail": "The crushed gravel softens each landing while it nudges your effort up a notch.",
+        "rail trail": "The old rail grade runs straight and nearly level, so it is easy to lock into a rhythm.",
         "mixed trail": "Surfaces shift between packed dirt and pavement, so stay light and adaptable on your feet.",
-        "mixed path": "A mix of pavement and park path keeps the footing easy but the scenery changing.",
+        "mixed path": "A blend of pavement and park path keeps the footing easy while the scenery keeps changing.",
     }.get(surface.lower(), "The footing stays runnable throughout.")
 
     sensations = (
-        "Early on you'll settle into an easy cadence. "
+        "Early on you settle into an easy cadence. "
         f"As the route opens up it becomes {terrain}. {legs} "
-        "By the final stretch you'll feel warm through the chest and loose in the hips, "
-        "finishing with that clean, earned tiredness rather than a wall."
+        "By the final stretch you feel warm through the chest and loose in the hips, "
+        "and you finish with that clean, earned tiredness rather than hitting a wall."
     )
 
     prep = []
     if r["gain"] >= 120:
-        prep.append("bring a little more fuel for the climbing")
+        prep.append("bring a little extra fuel for the climbing")
     if surface.lower() in ("gravel trail", "mixed trail"):
-        prep.append("trail or grippy shoes will help on the loose sections")
+        prep.append("trail shoes with grip will help on the loose sections")
     if dist >= 12:
         prep.append("carry water for the longer stretches")
-    prep_line = (" To prepare, " + ", and ".join(prep) + ".") if prep else ""
+    prep_line = (" Before you head out, " + ", and ".join(prep) + ".") if prep else ""
 
     return (
         f"{name} is {effort} of about {dist:.1f} km, {terrain}. "
@@ -94,10 +94,11 @@ def summarize(payload: dict) -> dict:
             client = OpenAI(api_key=settings.OPENAI_API_KEY)
             r = _relief(payload.get("elevation", []) or [])
             prompt = (
-                "You are StrideSense, a running guide. In 4-5 vivid sentences, describe what "
-                "this run will LOOK like and what SENSATIONS the runner should expect (footing, "
-                "climbs, breathing, how the legs will feel), and what to prepare for. "
-                "Be concrete and grounded, not flowery.\n\n"
+                "You are StrideSense, a running guide. In four or five vivid sentences, describe "
+                "what this run will look like and what sensations the runner should expect, "
+                "covering footing, climbs, breathing, and how the legs will feel, plus what to "
+                "prepare for. Be concrete and grounded, not flowery. Write in plain, natural "
+                "English. Do not use em dashes or hyphens; use commas and short sentences instead.\n\n"
                 f"Route: {payload.get('name')}\n"
                 f"Distance: {payload.get('distance_km')} km\n"
                 f"Surface: {payload.get('surface')}\n"
