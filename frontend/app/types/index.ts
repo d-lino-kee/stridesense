@@ -4,6 +4,8 @@ export type ElevationPref = 'flat' | 'up' | 'down'
 
 export interface RunRecord {
   run_id?: number
+  name?: string | null
+  notes?: string | null
   date: string
   day_of_week?: number
   season?: Season

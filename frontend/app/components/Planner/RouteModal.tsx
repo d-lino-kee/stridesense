@@ -6,7 +6,7 @@ import SpectrumBar from '@/components/ui/SpectrumBar'
 import TerrainView from '@/components/Terrain/TerrainView'
 import RouteSummary from '@/components/RouteIntel/RouteSummary'
 import ReviewsPanel from '@/components/RouteIntel/ReviewsPanel'
-import { tracerEmbedFromWaypoints, terrainStats, type WaterlooRoute } from '@/data/waterlooRoutes'
+import { tracerEmbedFromWaypoints, terrainStats, directionsUrl, type WaterlooRoute } from '@/data/waterlooRoutes'
 
 export type PlannerRoute = WaterlooRoute & { id?: number }
 
@@ -42,10 +42,10 @@ export default function RouteModal({
 
   return (
     <Modal open={open} onClose={onClose} className="max-w-5xl">
-      <div className="overflow-hidden rounded-3xl bg-white shadow-lift">
+      <div className="flex max-h-[90vh] flex-col overflow-hidden rounded-3xl bg-white shadow-lift">
         {/* Header */}
         <div
-          className="relative overflow-hidden px-6 py-6 sm:px-8"
+          className="relative shrink-0 overflow-hidden px-6 py-6 sm:px-8"
           style={{ background: `linear-gradient(135deg, ${route.accent}1f, #ffffff 65%)` }}
         >
           <div
@@ -74,7 +74,7 @@ export default function RouteModal({
         </div>
 
         {/* Body */}
-        <div className="max-h-[72vh] overflow-y-auto scrollbar-slim p-6 sm:p-8">
+        <div className="min-h-0 flex-1 overflow-y-auto scrollbar-slim p-6 sm:p-8">
           {/* Spectrums */}
           <div className="mb-6 grid gap-5 rounded-2xl border border-slate-100 bg-slate-50/50 p-5 sm:grid-cols-2">
             <SpectrumBar kind="suitability" value={route.score} />
@@ -84,9 +84,20 @@ export default function RouteModal({
           <div className="grid gap-6 lg:grid-cols-2">
             {/* Map tracer */}
             <section className="card overflow-hidden">
-              <div className="border-b border-slate-100 px-5 py-3">
-                <h3 className="text-sm font-bold text-ink">Route tracer</h3>
-                <p className="text-[11px] text-ink-muted">The exact path on Google Maps</p>
+              <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-5 py-3">
+                <div>
+                  <h3 className="text-sm font-bold text-ink">Route tracer</h3>
+                  <p className="text-[11px] text-ink-muted">The exact path on Google Maps</p>
+                </div>
+                <a
+                  href={directionsUrl(route.waypoints)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-brand-gradient px-3 py-1.5 text-xs font-bold text-white shadow-glow transition hover:brightness-105"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="h-3.5 w-3.5"><path d="M3 11l19-9-9 19-2-8-8-2z" strokeWidth="1.7" strokeLinejoin="round" /></svg>
+                  Get directions
+                </a>
               </div>
               <div className="relative h-72 bg-slate-100">
                 <iframe

@@ -1,12 +1,13 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import LocationSearch, { type Place } from '@/components/Discover/LocationSearch'
-import RouteModal, { type PlannerRoute } from './RouteModal'
+import { type PlannerRoute } from './RouteModal'
 import Switch from '@/components/ui/Switch'
 import SpectrumBar from '@/components/ui/SpectrumBar'
 import { apiFetch } from '@/api-client'
-import { tracerEmbedFromWaypoints, terrainStats, type WaterlooRoute } from '@/data/waterlooRoutes'
+import { tracerEmbedFromWaypoints, terrainStats, directionsUrl, type WaterlooRoute } from '@/data/waterlooRoutes'
 
 const FEELINGS = [
   { value: 'jog', label: 'Jog', emoji: '🚶', hint: 'Easy day' },
@@ -46,6 +47,7 @@ function adventureWord(a: number) {
 
 export default function RunPlanner() {
   const [area, setArea] = useState('')
+  const [cityQuery, setCityQuery] = useState('')
   const [start, setStart] = useState<Place | null>(null)
   const [end, setEnd] = useState<Place | null>(null)
   const [loop, setLoop] = useState(true)
@@ -59,29 +61,56 @@ export default function RunPlanner() {
   const [when, setWhen] = useState('today')
 
   const [results, setResults] = useState<PlannerRoute[]>([])
+  const [visibleCount, setVisibleCount] = useState(10)
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [meta, setMeta] = useState<{ target?: number; personalized?: boolean }>({})
-  const [modalRoute, setModalRoute] = useState<PlannerRoute | null>(null)
+  const router = useRouter()
+
+  function openRoute(r: PlannerRoute) {
+    try {
+      sessionStorage.setItem(`route:${r.slug}`, JSON.stringify(r))
+    } catch {
+      /* ignore quota errors */
+    }
+    router.push(`/route/${r.slug}`)
+  }
 
   const selected = results.find((r) => r.id === selectedId) ?? results[0]
   const top = results[0]
   const mapSrc = useMemo(() => (selected ? tracerEmbedFromWaypoints(selected.waypoints) : ''), [selected])
 
   async function generate() {
-    if (!start) {
-      setError('Search a city or start location first.')
-      return
-    }
     setLoading(true)
     setError(null)
+
+    // If the user typed a city but didn't pick a suggestion, resolve it now.
+    let origin = start
+    if (!origin && cityQuery.trim().length >= 2) {
+      try {
+        const geo = await apiFetch<{ items: Place[] }>(`/geo/search?q=${encodeURIComponent(cityQuery)}`)
+        if (geo.items?.[0]) {
+          origin = geo.items[0]
+          setStart(origin)
+          setArea(origin.label)
+        }
+      } catch {
+        /* fall through to the error below */
+      }
+    }
+    if (!origin) {
+      setError('Type a city and pick it from the list (or use your location) first.')
+      setLoading(false)
+      return
+    }
+
     try {
       const body = {
-        start_lat: start.lat,
-        start_lng: start.lng,
+        start_lat: origin.lat,
+        start_lng: origin.lng,
         ...(!loop && end ? { end_lat: end.lat, end_lng: end.lng } : {}),
-        area: area || start.label,
+        area: area || origin.label,
         feeling,
         pref_elevation: prefElev,
         adventure_level: adventure,
@@ -94,6 +123,7 @@ export default function RunPlanner() {
         { method: 'POST', body: JSON.stringify(body) },
       )
       setResults(res.items)
+      setVisibleCount(10)
       setSelectedId(res.items[0]?.id ?? null)
       setMeta({ target: res.target_km, personalized: res.personalized })
     } catch (e) {
@@ -140,6 +170,7 @@ export default function RunPlanner() {
               placeholder="Search a city, e.g. Waterloo, Ontario"
               icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="h-4 w-4"><path d="M3 21h18M6 21V8l6-4 6 4v13M10 21v-4h4v4" strokeWidth="1.6" strokeLinejoin="round" /></svg>}
               onSelect={(p) => { setArea(p.label); setStart(p) }}
+              onQueryChange={(v) => { setCityQuery(v); if (start) setStart(null) }}
             />
             <div className="mt-2 flex items-center gap-2">
               <button
@@ -270,7 +301,7 @@ export default function RunPlanner() {
             </div>
           )}
 
-          <button type="button" onClick={generate} disabled={loading || !start} className="group relative overflow-hidden py-3.5 text-base btn-primary">
+          <button type="button" onClick={generate} disabled={loading || (!start && cityQuery.trim().length < 2)} className="group relative overflow-hidden py-3.5 text-base btn-primary">
             <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
             {loading ? (
               <><span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" /> Finding your routes…</>
@@ -300,9 +331,15 @@ export default function RunPlanner() {
                   <SpectrumBar kind="suitability" value={top.score} />
                   <SpectrumBar kind="soreness" value={top.soreness} />
                 </div>
-                <button type="button" onClick={() => setModalRoute(top)} className="btn-primary mt-4 w-full py-2.5">
-                  View route · 3D terrain · reviews
-                </button>
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  <button type="button" onClick={() => openRoute(top)} className="btn-primary py-2.5">
+                    View details
+                  </button>
+                  <a href={directionsUrl(top.waypoints)} target="_blank" rel="noopener noreferrer" className="btn-ghost py-2.5">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="h-4 w-4"><path d="M3 11l19-9-9 19-2-8-8-2z" strokeWidth="1.7" strokeLinejoin="round" /></svg>
+                    Directions
+                  </a>
+                </div>
               </div>
 
               {/* Selected route map (updates when picking from list) */}
@@ -321,44 +358,93 @@ export default function RunPlanner() {
 
               {/* Ranked list */}
               <div className="flex items-center justify-between">
-                <p className="text-sm font-bold text-ink">Top {results.length} routes</p>
-                <span className={`chip ${meta.personalized ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100' : 'bg-slate-100 text-ink-muted'}`}>
-                  {meta.personalized ? 'Tuned to your runs' : 'Generic profile'}
-                </span>
+                <p className="text-sm font-bold text-ink">
+                  Showing {Math.min(visibleCount, results.length)} of {results.length}
+                </p>
+                <div className="flex items-center gap-2">
+                  <span className={`chip ${meta.personalized ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100' : 'bg-slate-100 text-ink-muted'}`}>
+                    {meta.personalized ? 'Tuned to your runs' : 'Generic profile'}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={generate}
+                    disabled={loading}
+                    title="Refresh routes"
+                    className="group flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-ink-muted transition hover:border-brand-200 hover:text-brand-600"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className={`h-4 w-4 ${loading ? 'animate-spin' : 'transition-transform group-hover:rotate-180'}`}><path d="M20 11a8 8 0 10-2.3 5.7M20 4v5h-5" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  </button>
+                </div>
               </div>
-              <div className="max-h-[300px] space-y-2 overflow-y-auto scrollbar-slim pr-1">
-                {results.map((r, i) => {
+              <div className="max-h-[620px] space-y-3 overflow-y-auto scrollbar-slim pr-1">
+                {results.slice(0, visibleCount).map((r, i) => {
                   const on = r.id === selected?.id
                   return (
                     <div
                       key={r.id}
-                      style={on ? { boxShadow: `0 0 0 2px ${r.accent}80` } : undefined}
-                      className={`flex items-center gap-3 rounded-xl border p-3 transition ${on ? 'border-transparent bg-white' : 'border-slate-200/70 bg-white/60 hover:bg-white'}`}
+                      onClick={() => setSelectedId(r.id!)}
+                      style={{
+                        background: `linear-gradient(135deg, ${r.accent}12, #ffffff 70%)`,
+                        ...(on ? { boxShadow: `0 0 0 2px ${r.accent}, 0 16px 40px -18px ${r.accent}80` } : {}),
+                      }}
+                      className={`group relative cursor-pointer overflow-hidden rounded-2xl border p-4 transition-all ${on ? 'border-transparent -translate-y-0.5' : 'border-slate-200/70 hover:-translate-y-0.5 hover:shadow-card'}`}
                     >
-                      <button type="button" onClick={() => setSelectedId(r.id!)} className="flex min-w-0 flex-1 items-center gap-3 text-left">
-                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-black text-white" style={{ background: r.accent }}>{i + 1}</span>
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate text-sm font-bold text-ink">{r.name}</span>
-                          <span className="block text-[11px] text-ink-muted">{r.distanceKm.toFixed(1)} km · +{r.elevationM} m · {fmtTime(r.minutes)}</span>
-                        </span>
-                        <span className="shrink-0 text-right">
-                          <span className="block text-sm font-black" style={{ color: r.accent }}>{r.score.toFixed(1)}</span>
-                          <span className="block text-[10px] text-ink-muted">fit</span>
-                        </span>
-                      </button>
-                      <button type="button" onClick={() => setModalRoute(r)} aria-label="View route" className="shrink-0 rounded-lg border border-slate-200 p-1.5 text-ink-muted transition hover:border-brand-200 hover:text-brand-600">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="h-4 w-4"><path d="M15 3h6v6M10 14L21 3M21 14v5a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h5" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                      </button>
+                      <span className="absolute left-0 top-0 h-full w-1.5" style={{ background: r.accent }} />
+                      <div className="flex items-start gap-3 pl-1.5">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-sm font-black text-white shadow-sm" style={{ background: r.accent }}>{i + 1}</span>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-start justify-between gap-2">
+                            <h4 className="truncate font-black text-ink">{r.name}</h4>
+                            <div className="shrink-0 text-right leading-none">
+                              <span className="text-lg font-black" style={{ color: r.accent }}>{r.score.toFixed(1)}</span>
+                              <span className="ml-0.5 text-[10px] font-semibold text-ink-muted">fit</span>
+                            </div>
+                          </div>
+                          {/* colorful info chips */}
+                          <div className="mt-2.5 flex flex-wrap gap-1.5">
+                            <span className="inline-flex items-center gap-1 rounded-lg bg-white/80 px-2 py-1 text-[11px] font-semibold text-ink shadow-sm ring-1 ring-slate-200/70">📏 {r.distanceKm.toFixed(1)} km</span>
+                            <span className="inline-flex items-center gap-1 rounded-lg bg-white/80 px-2 py-1 text-[11px] font-semibold text-ink shadow-sm ring-1 ring-slate-200/70">⏱ {fmtTime(r.minutes)}</span>
+                            <span className="inline-flex items-center gap-1 rounded-lg bg-white/80 px-2 py-1 text-[11px] font-semibold text-ink shadow-sm ring-1 ring-slate-200/70">⛰ +{r.elevationM} m</span>
+                            <span className="inline-flex items-center gap-1 rounded-lg bg-white/80 px-2 py-1 text-[11px] font-semibold text-ink shadow-sm ring-1 ring-slate-200/70">🛣 {r.surface}</span>
+                            <span className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-bold" style={{ background: `${r.accent}1a`, color: r.accent }}>{r.difficulty}</span>
+                          </div>
+                          {/* actions */}
+                          <div className="mt-3 flex gap-2">
+                            <button type="button" onClick={(e) => { e.stopPropagation(); openRoute(r) }} className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-ink px-3 py-1.5 text-xs font-bold text-white transition hover:brightness-110">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="h-3.5 w-3.5"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" strokeWidth="1.7" /><circle cx="12" cy="12" r="2.5" strokeWidth="1.7" /></svg>
+                              Details
+                            </button>
+                            <a href={directionsUrl(r.waypoints)} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-ink-soft transition hover:border-brand-200 hover:text-brand-600">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="h-3.5 w-3.5"><path d="M3 11l19-9-9 19-2-8-8-2z" strokeWidth="1.7" strokeLinejoin="round" /></svg>
+                              Directions
+                            </a>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   )
                 })}
               </div>
+
+              {visibleCount < results.length && (
+                <button
+                  type="button"
+                  onClick={() => setVisibleCount(results.length)}
+                  className="btn-ghost w-full py-2.5"
+                >
+                  Show {results.length - visibleCount} more options
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="h-4 w-4"><path d="M6 9l6 6 6-6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                </button>
+              )}
+              {visibleCount >= results.length && results.length > 10 && (
+                <button type="button" onClick={() => setVisibleCount(10)} className="btn-ghost w-full py-2">
+                  Show fewer
+                </button>
+              )}
             </>
           )}
         </div>
       </div>
-
-      <RouteModal route={modalRoute} open={!!modalRoute} onClose={() => setModalRoute(null)} />
     </section>
   )
 }

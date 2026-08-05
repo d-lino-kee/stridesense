@@ -221,6 +221,25 @@ export function tracerEmbedUrl(route: WaterlooRoute): string {
   return tracerEmbedFromWaypoints(route.waypoints)
 }
 
+/**
+ * A Google Maps *directions* deep link (turn-by-turn walking directions through
+ * the route's waypoints) that opens in a new tab / the Maps app.
+ */
+export function directionsUrl(pts: LatLng[]): string {
+  const origin = `${pts[0].lat},${pts[0].lng}`
+  const destination = `${pts[pts.length - 1].lat},${pts[pts.length - 1].lng}`
+  const mids = pts.slice(1, -1).slice(0, 9) // Maps allows up to ~9 waypoints
+  const wp = mids.map((p) => `${p.lat},${p.lng}`).join('|')
+  const params = new URLSearchParams({
+    api: '1',
+    origin,
+    destination,
+    travelmode: 'walking',
+  })
+  if (wp) params.set('waypoints', wp)
+  return `https://www.google.com/maps/dir/?${params.toString()}`
+}
+
 /** Single-pin embed centred on the route start. */
 export function pinEmbedUrl(route: WaterlooRoute): string {
   const p = route.waypoints[0]

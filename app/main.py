@@ -40,10 +40,23 @@ def _route_rows(db) -> list[dict]:
     ]
 
 
+def _ensure_run_columns() -> None:
+    """Add newer columns to an existing runs table (tiny idempotent migration)."""
+    from sqlalchemy import text
+
+    for col in ("name VARCHAR", "notes VARCHAR"):
+        try:
+            with engine.begin() as conn:
+                conn.execute(text(f"ALTER TABLE runs ADD COLUMN {col}"))
+        except Exception:
+            pass  # column already exists
+
+
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     """Create tables, seed demo data on first boot, and train the ML models."""
     Base.metadata.create_all(engine)
+    _ensure_run_columns()
 
     with session_scope() as db:
         has_data = db.query(Route).count() > 0

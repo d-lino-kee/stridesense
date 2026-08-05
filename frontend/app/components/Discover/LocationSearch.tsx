@@ -9,11 +9,13 @@ export default function LocationSearch({
   placeholder,
   initial,
   onSelect,
+  onQueryChange,
   icon,
 }: {
   placeholder: string
   initial?: string
   onSelect: (p: Place) => void
+  onQueryChange?: (q: string) => void
   icon?: React.ReactNode
 }) {
   const [q, setQ] = useState(initial ?? '')
@@ -56,6 +58,7 @@ export default function LocationSearch({
 
   function choose(p: Place) {
     setQ(p.label)
+    onQueryChange?.(p.label)
     setOpen(false)
     onSelect(p)
   }
@@ -66,7 +69,10 @@ export default function LocationSearch({
         <span className="text-ink-muted">{icon}</span>
         <input
           value={q}
-          onChange={(e) => setQ(e.target.value)}
+          onChange={(e) => {
+            setQ(e.target.value)
+            onQueryChange?.(e.target.value)
+          }}
           onFocus={() => items.length && setOpen(true)}
           onKeyDown={(e) => {
             if (e.key === 'ArrowDown') setActive((a) => Math.min(a + 1, items.length - 1))

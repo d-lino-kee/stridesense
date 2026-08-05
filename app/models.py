@@ -23,6 +23,8 @@ class Run(Base):
     __tablename__ = "runs"
     run_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[str] = mapped_column(String, ForeignKey("users.user_id"))
+    name: Mapped[str | None] = mapped_column(String, nullable=True)
+    notes: Mapped[str | None] = mapped_column(String, nullable=True)
     date: Mapped[datetime] = mapped_column(DateTime)
     day_of_week: Mapped[int] = mapped_column(Integer)
     season: Mapped[str] = mapped_column(String)

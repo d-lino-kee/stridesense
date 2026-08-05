@@ -12,10 +12,24 @@ class RunIn(BaseModel):
     avg_elevation: float
     soreness_level: int
     rushed: bool = False
+    name: str | None = None
+    notes: str | None = None
 
 
 class RunOut(RunIn):
     run_id: int
+
+
+class RunUpdate(BaseModel):
+    name: str | None = None
+    notes: str | None = None
+    run_type: str | None = None
+    distance_km: float | None = None
+    avg_speed: float | None = None
+    avg_elevation: float | None = None
+    soreness_level: int | None = None
+    rushed: bool | None = None
+    date: datetime | None = None
 
 
 class RouteIn(BaseModel):

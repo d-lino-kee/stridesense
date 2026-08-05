@@ -12,6 +12,7 @@ from ..models import Run, User
 from ..ml.model import artifacts
 from ..ml.trainer import user_stats_from_runs
 from ..route_intel.discover import generate_candidates
+from ..route_intel import places
 from ..schemas import DiscoverInput
 
 router = APIRouter(prefix="/discover", tags=["discover"])
@@ -82,7 +83,9 @@ def _blurb(dist: float, gain: float, surface: str, shape: str) -> str:
 
 
 @router.post("")
-async def discover(payload: DiscoverInput, user_id: str | None = Depends(get_current_user)):
+def discover(payload: DiscoverInput, user_id: str | None = Depends(get_current_user)):
+    # Sync def → FastAPI runs it in a worker thread, so the blocking reverse-geocode
+    # calls used to name routes don't stall the event loop.
     # Personalise from the signed-in user's history where available.
     with session_scope() as db:
         runs = db.query(Run).filter(Run.user_id == user_id).all() if user_id else []
@@ -120,7 +123,7 @@ async def discover(payload: DiscoverInput, user_id: str | None = Depends(get_cur
         else None
     )
 
-    candidates = generate_candidates(start, end, target, payload.adventure_level, count=30)
+    candidates = generate_candidates(start, end, target, payload.adventure_level, count=90)
 
     context = {
         "feeling": payload.feeling,
@@ -131,14 +134,21 @@ async def discover(payload: DiscoverInput, user_id: str | None = Depends(get_cur
         "target_distance_km": target,
     }
     scored = artifacts.rank_candidates(context, candidates, user_stats)
-    # Blend the ML suitability with a granular fit score so the top 10 spread out
-    # instead of all saturating at 10, then take the best.
+    # Blend the ML suitability with a granular fit score so results spread out
+    # instead of all saturating at 10, then take the best 50.
     blended = [
         (c, 0.55 * ml + 0.45 * _match(c["distance_km"], c["elevation_gain"], target, payload.pref_elevation))
         for c, ml in scored
     ]
     blended.sort(key=lambda t: t[1], reverse=True)
-    ranked = blended[:10]
+    ranked = blended[:50]
+
+    # Name each route after the neighborhood/place near its midpoint.
+    midpoints = [
+        (c["waypoints"][len(c["waypoints"]) // 2]["lat"], c["waypoints"][len(c["waypoints"]) // 2]["lng"])
+        for c, _ in ranked
+    ]
+    place_lookup = places.names_for_points(midpoints)
 
     items = []
     for i, (c, score) in enumerate(ranked):
@@ -146,6 +156,15 @@ async def discover(payload: DiscoverInput, user_id: str | None = Depends(get_cur
         gain = c["elevation_gain"]
         gain_per_km = gain / max(dist, 0.1)
         surface = _surface(c["seed"], payload.adventure_level)
+
+        mid = c["waypoints"][len(c["waypoints"]) // 2]
+        place = places.name_for(mid["lat"], mid["lng"], place_lookup)
+        shape_label = _SHAPE_LABEL.get(c["shape"], "Route")
+        name = (
+            f"{place} · {dist:.1f}k {shape_label}"
+            if place
+            else _name(c["seed"], payload.area, c["shape"], gain_per_km, dist)
+        )
 
         # Predicted soreness for this specific route.
         recent_like = [{
@@ -162,8 +181,8 @@ async def discover(payload: DiscoverInput, user_id: str | None = Depends(get_cur
         items.append({
             "id": i + 1,
             "slug": f"discover-{c['seed']}",
-            "name": _name(c["seed"], payload.area, c["shape"], gain_per_km, dist),
-            "area": (payload.area.split(",")[0] if payload.area else "Near you"),
+            "name": name,
+            "area": (place or (payload.area.split(",")[0] if payload.area else "Near you")),
             "blurb": _blurb(dist, gain, surface, c["shape"]),
             "distanceKm": dist,
             "elevationM": round(gain),

@@ -30,6 +30,7 @@ export default function AddRunModal({ open, onClose }: { open: boolean; onClose:
   const [msg, setMsg] = useState<string | null>(null)
   const [err, setErr] = useState<string | null>(null)
 
+  const [runName, setRunName] = useState('')
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10))
   const [runType, setRunType] = useState<RunType>('mid')
   const [distance, setDistance] = useState('8')
@@ -63,6 +64,7 @@ export default function AddRunModal({ open, onClose }: { open: boolean; onClose:
           avg_elevation: Number(elevation) || 0,
           soreness_level: soreness,
           rushed,
+          name: runName.trim() || null,
         }),
       })
       const runs = await apiFetch<{ items: RunRecord[] }>('/runs?limit=30')
@@ -81,8 +83,8 @@ export default function AddRunModal({ open, onClose }: { open: boolean; onClose:
 
   return (
     <Modal open={open} onClose={onClose} className="max-w-lg">
-      <div className="overflow-hidden rounded-3xl bg-white shadow-lift">
-        <div className="flex items-center gap-3 bg-brand-gradient px-6 py-5 text-white">
+      <div className="flex max-h-[90vh] flex-col overflow-hidden rounded-3xl bg-white shadow-lift">
+        <div className="flex shrink-0 items-center gap-3 bg-brand-gradient px-6 py-5 text-white">
           <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/20">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="h-5 w-5"><path d="M13 4l-2 6h4l-2 10M8 8l-3 2 2 3" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </span>
@@ -92,7 +94,11 @@ export default function AddRunModal({ open, onClose }: { open: boolean; onClose:
           </div>
         </div>
 
-        <form onSubmit={submit} className="grid gap-4 p-6">
+        <form onSubmit={submit} className="grid min-h-0 flex-1 gap-4 overflow-y-auto scrollbar-slim p-6">
+          <label>
+            <span className="field-label">Name <span className="font-normal text-ink-muted">(optional)</span></span>
+            <input value={runName} onChange={(e) => setRunName(e.target.value)} placeholder="e.g. Sunday long run" className="field-control" />
+          </label>
           <div>
             <span className="field-label">Run type</span>
             <div className="grid grid-cols-4 gap-2">

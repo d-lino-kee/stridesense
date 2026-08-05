@@ -60,6 +60,15 @@ const config: Config = {
           '0%': { opacity: '0', transform: 'scale(0.94) translateY(6px)' },
           '100%': { opacity: '1', transform: 'scale(1) translateY(0)' },
         },
+        'modal-in': {
+          '0%': { opacity: '0', transform: 'scale(0.9) translateY(24px)' },
+          '55%': { opacity: '1', transform: 'scale(1.015) translateY(-3px)' },
+          '100%': { opacity: '1', transform: 'scale(1) translateY(0)' },
+        },
+        'backdrop-in': {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
         'ping-slow': {
           '0%': { transform: 'scale(1)', opacity: '0.55' },
           '75%, 100%': { transform: 'scale(2.4)', opacity: '0' },
@@ -73,6 +82,8 @@ const config: Config = {
         float: 'float 4s ease-in-out infinite',
         shimmer: 'shimmer 2.2s linear infinite',
         'pop-in': 'pop-in 0.45s cubic-bezier(0.22,1,0.36,1) both',
+        'modal-in': 'modal-in 0.42s cubic-bezier(0.34,1.56,0.64,1) both',
+        'backdrop-in': 'backdrop-in 0.25s ease-out both',
         'ping-slow': 'ping-slow 2.4s cubic-bezier(0,0,0.2,1) infinite',
         'draw-dash': 'draw-dash 2.5s ease-out forwards',
       },

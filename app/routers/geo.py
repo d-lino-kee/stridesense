@@ -1,9 +1,9 @@
 """Geocoding proxy.
 
-Wraps OpenStreetMap's free Nominatim geocoder so the frontend can search cities
-and start/end locations without an API key. Proxying server-side lets us set a
-proper User-Agent, keep within usage limits via the distributed cache, and avoid
-browser CORS issues.
+Wraps Komoot's Photon geocoder (OSM-based) so the frontend can search cities and
+start/end locations without an API key. Photon is built for type-ahead search and
+tolerates frequent queries, so it doesn't rate-limit us the way public Nominatim
+does. Proxying server-side lets us cache results and avoid browser CORS issues.
 """
 
 from __future__ import annotations
@@ -15,9 +15,19 @@ from .. import http_util
 
 router = APIRouter(prefix="/geo", tags=["geo"])
 
-_NOMINATIM = "https://nominatim.openstreetmap.org/search"
+_PHOTON = "https://photon.komoot.io/api"
 _HEADERS = {"User-Agent": "StrideSense/1.0 (running route planner; local dev)"}
 _TTL = 60 * 60 * 24  # geocodes are stable; cache for a day
+
+
+def _display(props: dict) -> str:
+    name = props.get("name") or ""
+    parts = [name]
+    for field in ("city", "county", "state", "country"):
+        v = props.get(field)
+        if v and v != name and v not in parts:
+            parts.append(v)
+    return ", ".join(p for p in parts if p)
 
 
 @router.get("/search")
@@ -33,34 +43,30 @@ async def search(q: str, limit: int = 6):
 
     try:
         r = http_util.get(
-            _NOMINATIM,
-            params={"q": q, "format": "json", "limit": limit, "addressdetails": 1},
+            _PHOTON,
+            params={"q": q, "limit": limit, "lang": "en"},
             headers=_HEADERS,
             timeout=10,
         )
         r.raise_for_status()
-        data = r.json()
+        feats = r.json().get("features", [])
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Geocoder unavailable: {e}")
 
     items = []
-    for d in data:
-        addr = d.get("address", {})
-        label = (
-            addr.get("city")
-            or addr.get("town")
-            or addr.get("village")
-            or addr.get("suburb")
-            or d.get("name")
-            or d.get("display_name", "").split(",")[0]
-        )
+    for f in feats:
+        props = f.get("properties", {})
+        coords = f.get("geometry", {}).get("coordinates", [])
+        if len(coords) < 2:
+            continue
+        label = props.get("name") or props.get("city") or _display(props).split(",")[0]
         items.append(
             {
                 "label": label,
-                "display_name": d.get("display_name", ""),
-                "lat": float(d["lat"]),
-                "lng": float(d["lon"]),
-                "type": d.get("type"),
+                "display_name": _display(props),
+                "lat": float(coords[1]),
+                "lng": float(coords[0]),
+                "type": props.get("osm_value") or props.get("type"),
             }
         )
 
